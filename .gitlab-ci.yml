@@ -1,0 +1,46 @@
+stages:
+    - build
+    - style_test 
+    - test
+    - deploy
+Build:
+    stage: build
+  
+    script:
+        - cd src/cat/
+        - make s21_cat
+        - cd ../grep/
+        - make s21_grep
+    artifacts:
+        paths:
+            - src/cat/s21_cat
+            - src/grep/s21_grep
+        expire_in: 30 days
+    after_script:
+    - bash notification.sh
+
+
+Style:
+  stage: style_test
+  script:
+    - clang-format -i -style=google src/*/*.c src/*/*.h 
+    - git diff --exit-code
+  after_script:
+    - bash notification.sh
+
+Test:
+    stage: test
+    script:
+        - bash test_int.sh
+    after_script:
+        - bash notification.sh
+
+Deploy:
+  stage: deploy
+  script:
+    - bash src/deploy.sh
+  only:
+  - develop
+  when: manual
+  after_script:
+    - bash notification.sh
